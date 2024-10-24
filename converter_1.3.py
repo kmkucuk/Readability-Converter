@@ -97,7 +97,7 @@ for index, currentTrial in stim_props.all_trials.iterrows():
     for fontName in textprops_small.allconditions:
         print('font name', fontName)
         currentCondition = textprops_small.allconditions[fontName]
-        adjustment_scalar = textprops_small.get_adjustment_factor(currentCondition["font"])
+        adjustment_scalar = 1 #textprops_small.get_adjustment_factor(currentCondition["font"])
         print(currentTrial["textid"])        
         image = create_text_image(currentTrial["text"], 
                                   'black',
