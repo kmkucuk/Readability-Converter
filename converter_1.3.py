@@ -84,14 +84,19 @@ def create_text_image(text, text_color, font_path, initial_font_size, line_spaci
 # initialize the Readability Tool converter GUI 
 
 fastLoadTestData = True
+startingPath = ""
 
 def DoAllThings(progressBarUpdate = None, interface=None, finishCallback=None):
     global fastLoadTestData
+    global startingPath
     sheetPath = ""
     fontPath = ""
     output_path = ""
+    if startingPath == "":
+        startingPath = getcwd()
+
     if fastLoadTestData:
-        currentPath = getcwd()
+        currentPath = startingPath
         output_path = currentPath + "\\sample_project\\images"
         fontPath = currentPath + "\\sample_project\\fonts"
         sheetPath = currentPath + "\\sample_project\\stimulus_set.xlsx"
