@@ -8,8 +8,10 @@ from getStimulusSheet import getStimulusSheet
 from converterGUI import MyGUI
 
 import math
+import time
 
 def create_text_image(text, text_color, font_path, initial_font_size, line_spacing, kerning, size_adjustment, imageDimensions):
+
     # Function to wrap text
     def wrap_text(text, font, imageDimensions):
         lines               = []
@@ -36,7 +38,9 @@ def create_text_image(text, text_color, font_path, initial_font_size, line_spaci
 
     font = ImageFont.truetype(font_path, round(initial_font_size * size_adjustment))
     wrapped_lines = wrap_text(text, font, imageDimensions)
-
+    temp_text = ""
+    for l in wrapped_lines:
+        temp_text += l + "\n"
     # Create an image with white background
     image = Image.new('RGB', (imageDimensions["width"], imageDimensions["height"]), 'white')
     draw = ImageDraw.Draw(image)
@@ -57,11 +61,13 @@ def create_text_image(text, text_color, font_path, initial_font_size, line_spaci
     # assign centered vertical position for the starting point of paragraph
     y = centered_y
 
+    ## draws all the text at once no kerning support but a little faster 
+    ##draw.text((imageDimensions["page_borders"], centered_y), temp_text, font=font, fill=text_color)
+
     for line in wrapped_lines:
-        x = imageDimensions["page_borders"]        
+        x = imageDimensions["page_borders"]
+                
         for char in line:
-
-
             draw.text((x, y), char, font=font, fill=text_color)
             x += font.getlength(char) + kerning
         # measures each line height for each iteration, decides on Y axis 
@@ -76,46 +82,64 @@ def create_text_image(text, text_color, font_path, initial_font_size, line_spaci
 
 
 # initialize the Readability Tool converter GUI 
-interface = MyGUI()
 
-print(interface.fontSize)
-print(type(interface.fontSize))
+fastLoadTestData = True
 
-# get font files
-allfonts = getFilesInDir(interface.fontfpath)
+def DoAllThings(progressBarUpdate = None, interface=None, finishCallback=None):
+    global fastLoadTestData
+    sheetPath = ""
+    fontPath = ""
+    output_path = ""
+    if fastLoadTestData:
+        currentPath = getcwd()
+        output_path = currentPath + "\\sample_project\\images"
+        fontPath = currentPath + "\\sample_project\\fonts"
+        sheetPath = currentPath + "\\sample_project\\stimulus_set.xlsx"
+        pass
+    else:
+        output_path = interface.folderpath
+        sheetPath = interface.filepath
+        fontPath = interface.fontfpath
 
-textprops_small = getTextProperties(font_files=allfonts, font_sizes=interface.fontSize, letter_spacings=interface.spacings, line_spacings="1")
+    print(interface.fontSize)
+    print(type(interface.fontSize))
 
-stim_props = getStimulusSheet(interface.filepath)
+    # get font files
+    allfonts = getFilesInDir(fontPath)
 
-imageDimensions = getImageDimensions.get_dimensions(interface.val_pixelsx, interface.val_pixelsy)
+    textprops_small = getTextProperties(font_files=allfonts, font_sizes=interface.fontSize, letter_spacings=interface.spacings, line_spacings="1")
 
-output_path = interface.folderpath
+    stim_props = getStimulusSheet(sheetPath)
 
-for index, currentTrial in stim_props.all_trials.iterrows():
+    imageDimensions = getImageDimensions.get_dimensions(interface.val_pixelsx, interface.val_pixelsy)
 
-    for fontName in textprops_small.allconditions:
-        print('font name', fontName)
-        currentCondition = textprops_small.allconditions[fontName]
-        adjustment_scalar = 1 #textprops_small.get_adjustment_factor(currentCondition["font"])
-        print(currentTrial["textid"])        
-        image = create_text_image(currentTrial["text"], 
-                                  'black',
-                                  currentCondition["font"], 
-                                  math.ceil(currentCondition["size"]), 
-                                  currentCondition["line_sp"], 
-                                  currentCondition["kerning"], 
-                                  adjustment_scalar,
-                                  imageDimensions)
-        pathName =  "/".join([output_path,"_".join([currentTrial["textid"],fontName])]) + ".PNG"
+    rowCount = stim_props.all_trials.shape[0]
+    for index, currentTrial in stim_props.all_trials.iterrows():
+        for fontName in textprops_small.allconditions:
+            print('font name', fontName)
+            currentCondition = textprops_small.allconditions[fontName]
+            adjustment_scalar = 1 #textprops_small.get_adjustment_factor(currentCondition["font"])
+            print(currentTrial["textid"])
+            startTime = time.time()
+            image = create_text_image(currentTrial["text"], 
+                                    'black',
+                                    currentCondition["font"], 
+                                    math.ceil(currentCondition["size"]), 
+                                    currentCondition["line_sp"], 
+                                    currentCondition["kerning"], 
+                                    adjustment_scalar,
+                                    imageDimensions)
+            pathName =  "/".join([output_path,"_".join([currentTrial["textid"],fontName])]) + ".PNG"
+            print ("it took : " + str(time.time()- startTime))
+            if not path.isdir(output_path):
+                makedirs(output_path)
+    
+            if not output_path == getcwd():
+                chdir(output_path)
 
-        if not path.isdir(output_path):
-            makedirs(output_path)
- 
-        if not output_path == getcwd():
-            chdir(output_path)
-
-        image.save(pathName)
+            image.save(pathName)
+        progressBarUpdate((index+1)/rowCount)
+    finishCallback()
 
 
-
+_interface = MyGUI(conversion_callback=DoAllThings, fastLoadTest=fastLoadTestData)

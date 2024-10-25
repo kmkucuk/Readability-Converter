@@ -6,16 +6,18 @@ from tkinter import messagebox
 from tkinter import filedialog
 from tkinter.ttk import *
 
+
 class MyGUI:    
 
-    def __init__(self):
-
+    def __init__(self, fastLoadTest = False, conversion_callback = None):
+        self.conversionCallback = conversion_callback
         self.root       = tk.Tk()
 
         self.root.title("Readability Tool Text to Image Converter")
 
         self.root.iconbitmap("icon.ico")
 
+        
         # make the dialog box 700 x 400 pixels 
         dbox_x          = 700
         dbox_y          = 425
@@ -47,7 +49,7 @@ class MyGUI:
         font_size       = tk.StringVar(self.root,value="24") # initialize font size for image output
 
         # convert button state (enabled after entries)
-        convState = 'disabled'
+        convState =  ["disabled" , 'normal'] [fastLoadTest]
 
         ###############
         # SELECT FILE #
@@ -172,6 +174,13 @@ class MyGUI:
         self.convertButton      = tk.Button(self.root,text = "Convert", font = ('Arial',fontsize*2),command = self.return_values, state=convState)
         self.convertButton.place(x = start_x, y=sixthLineY, width = buttonrect_x*1.5)
 
+        #############################################
+        ##   PROGRESS BAR                        ####
+        #############################################
+        self.progress = tk.IntVar()
+        self.progressBar= Progressbar(orient=tk.HORIZONTAL, variable=self.progress, length=int(dbox_x * 0.7))
+        self.progressBar.place (x=start_x, y=start_y + linehop_x*6)
+
         def conv_button_update(*args):
             if (len(file_path.get())>5) and (len(folder_path.get())>5) and (len(font_folder_path.get())>5):
                 self.convertButton.config(state='normal')
@@ -207,6 +216,12 @@ class MyGUI:
         self.selectFontFile.delete(0,tk.END)
         self.selectFontFile.insert(0,font_folder_path)
 
+    ##progress is 0 to 1
+    def updateProgressBar(self, prog):
+        
+        self.progress.set(int(100*prog))
+        self.root.update_idletasks()
+        pass
 
     def browse_folder_button(self):
         folder_path = filedialog.askdirectory(title='Select Image Output Folder')
@@ -219,6 +234,10 @@ class MyGUI:
     def on_closing(self):
         if messagebox.askyesno(title = "Quit?", message="Do you really want to quit?"):
             self.root.destroy()
+
+    ## we can start all over if we like
+    def conversionComplete(self):
+        self.convertButton.config(state='normal')
 
     def return_values(self):
         if messagebox.askyesno(title = "Initializing Conversion", message="Do you want to start the conversion process?"):
@@ -238,7 +257,10 @@ class MyGUI:
 
             #self.selectFontFile.delete(0,tk.END)
             #self.selectFolder.delete(0,tk.END)
-            self.root.destroy()
+            ##self.root.destroy()
+            self.convertButton.config(state='disabled')
+            ## make a callback instead and disable buttons until we're done
+            self.conversionCallback(progressBarUpdate = self.updateProgressBar, finishCallback=self.conversionComplete, interface=self)
 
 
 
