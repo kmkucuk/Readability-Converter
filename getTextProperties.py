@@ -158,7 +158,7 @@ class getTextProperties():
         return dict(zip(line_spacing_names,line_spacing_vector))
 
 
-    def get_glyph_height(self,font_path, character):
+    def get_glyph_height(self, font_path, character):
         """
         Get height of a character using fonttools library
 
@@ -206,8 +206,24 @@ class getTextProperties():
         adjustment_ratio = self.get_glyph_height(reference_font,character) / self.get_glyph_height(target_font,character)
         return adjustment_ratio
 
+    def get_font_baseline(self, font_path):
+        # Load the font file
+        font = TTFont(font_path)
+        
+        # Access the 'OS/2' table (Windows Metrics)
+        os2_table = font["OS/2"]
 
+        # Get the units per em
+        units_per_em = font['head'].unitsPerEm
 
+        # Extract baseline information
+        baseline = (os2_table.sTypoAscender - os2_table.sTypoDescender) / units_per_em
+        
+        print(f"Font Baseline (Ascender - Descender): {baseline}")
+        print(f"Ascender: {os2_table.sTypoAscender}, Descender: {os2_table.sTypoDescender}")
+        
+        return baseline
+    
     def get_font_name(self,font_path):
         """
         Strips a path string from its parent directory and file extension. 
