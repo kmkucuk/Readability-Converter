@@ -7,10 +7,12 @@ from getTextProperties import getTextProperties
 from getStimulusSheet import getStimulusSheet
 from converterGUI import MyGUI
 
+# get from: https://pypi.org/project/python-bidi/
 from bidi.algorithm import get_display
+
+# get from: https://pypi.org/project/arabic-reshaper/
 import arabic_reshaper
 import string
-
 import math
 import time
 
@@ -20,7 +22,7 @@ def create_text_image(text, text_color, font_path, initial_font_size, line_spaci
         lines               = []
         words               = text.split()
         current_line        = []
-        line_offset       = []
+        line_offset         = []
         max_width           = imageDimensions["wrap_width"] 
         current_width       = imageDimensions["page_borders"]       
         word_width          = []
@@ -43,10 +45,8 @@ def create_text_image(text, text_color, font_path, initial_font_size, line_spaci
         if current_line:
             line_offset.append(max_width-current_width)
             lines.append(' '.join(current_line))
-
-
             return lines, line_offset
-    
+
     # TODO: Loop through all font conditions, and load in backup fonts for each one 
     if renderLanguage == "arabic":
         current_font = backupFontProperties.get_font_name(font_path)
@@ -57,13 +57,12 @@ def create_text_image(text, text_color, font_path, initial_font_size, line_spaci
             backup_font_condition = backup_font_name[backup_font_name.rindex('_')+1:]
             print(backup_fonti)
             print(backup_font_condition)    
-            if current_font_condition == backup_font_condition:
+            if current_font_condition == backup_font_condition: 
                 backup_font_path = backup_fonti
+                backup_font = ImageFont.truetype(backup_font_path , round(initial_font_size * size_adjustment))
                 break
 
-    
-    font = ImageFont.truetype(font_path, round(initial_font_size * size_adjustment))   
-    backup_font = ImageFont.truetype(backup_font_path , round(initial_font_size * size_adjustment))
+    font = ImageFont.truetype(font_path, round(initial_font_size * size_adjustment))       
     wrapped_lines, line_offset = wrap_text(text, font, imageDimensions)
 
     # Create an image with white background
@@ -86,10 +85,11 @@ def create_text_image(text, text_color, font_path, initial_font_size, line_spaci
     # assign centered vertical position for the starting point of paragraph
     y = centered_y
 
-    # shift baseline towards lower line for latin characters 
-    shift_baseline = (abs(backupFontProperties.get_font_baseline(font_path) - backupFontProperties.get_font_baseline(backup_font_path)) * initial_font_size * size_adjustment) / 2
+    if renderLanguage == "arabic":
+        # shift baseline towards lower line for latin characters 
+        shift_baseline = (abs(backupFontProperties.get_font_baseline(font_path) - backupFontProperties.get_font_baseline(backup_font_path)) * initial_font_size * size_adjustment) / 2
     
-    backup_font_chars = ''.join([string.ascii_letters, '()[]\"'])
+        backup_font_chars = ''.join([string.ascii_letters, '%()[]\"'])
     for line,offset in zip(wrapped_lines,line_offset):
         if renderLanguage == "arabic":
             line = get_display(line)
@@ -98,7 +98,7 @@ def create_text_image(text, text_color, font_path, initial_font_size, line_spaci
             x = imageDimensions["page_borders"]
                 
         for char in line:
-            if char in backup_font_chars:
+            if renderLanguage == "arabic" and (char in backup_font_chars):
                 print('switched to backup font')
                 render_font = backup_font
                 offset_y = shift_baseline
@@ -116,15 +116,14 @@ def create_text_image(text, text_color, font_path, initial_font_size, line_spaci
 
     return image
 
-
-
 # initialize the Readability Tool converter GUI 
+renderLanguage = "english" # TODO (mert): add a feature where you can select Latin or Arabic alphabet.
 
-renderLanguage = "arabic" # TODO (mert): add a feature where you can select Latin or Arabic alphabet.
-fastLoadTestData = True
-fastLoadFolder = "arabic"
+fastLoadTestData = False
+fastLoadFolder = "dyslexia"
 backup_font_path  = ""
 startingPath = ""
+startingPath = getcwd() + "\\projects"
 
 def DoAllThings(progressBarUpdate = None, interface=None, finishCallback=None):
     global fastLoadTestData
@@ -142,20 +141,25 @@ def DoAllThings(progressBarUpdate = None, interface=None, finishCallback=None):
         fontPath = currentPath + "\\"+fastLoadFolder+"\\fonts"
         backup_font_path = currentPath + "\\"+fastLoadFolder+"\\backup_fonts"
         sheetPath = currentPath + "\\"+fastLoadFolder+"\\stimulus_set.xlsx"
-        pass
+        
     else:
         output_path = interface.folderpath
         sheetPath = interface.filepath
         fontPath = interface.fontfpath
 
+    if renderLanguage == "arabic":
+        backup_font_path = startingPath + "\\"+fastLoadFolder+"\\backup_fonts"
+        allBackupFonts = getFilesInDir(backup_font_path) 
+        backupFontProperties = getTextProperties(font_files = allBackupFonts, font_sizes=interface.fontSize, letter_spacings=interface.spacings, line_spacings="1")
+    else:
+        backupFontProperties = None
     print(interface.fontSize)
     print(type(interface.fontSize))
 
+    reference_font_path = fontPath + "\\Times.woff"
     # get font files
     allfonts = getFilesInDir(fontPath)
-    allBackupFonts = getFilesInDir(backup_font_path)
 
-    backupFontProperties = getTextProperties(font_files = allBackupFonts, font_sizes=interface.fontSize, letter_spacings=interface.spacings, line_spacings="1")
 
     fontProperties = getTextProperties(font_files=allfonts, font_sizes=interface.fontSize, letter_spacings=interface.spacings, line_spacings="1")
 
@@ -173,7 +177,9 @@ def DoAllThings(progressBarUpdate = None, interface=None, finishCallback=None):
             print('font name', fontName)
             currentCondition = fontProperties.allconditions[fontName]
 
-            adjustment_scalar = 1 #fontProperties.get_adjustment_factor(currentCondition["font"])
+            adjustment_scalar = fontProperties.get_adjustment_factor(currentCondition["font"], reference_font_path, 'x')
+
+            print('adjustment scalar', adjustment_scalar)
 
             print(currentTrial["textid"])
             startTime = time.time()

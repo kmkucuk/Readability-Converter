@@ -58,7 +58,6 @@ class getStimulusSheet:
         return trialProperties[0]
     
 
-
     def passage_count(self,current_trial):
         """
         Returns the passage screen counts specified in "trialProperties" header of the stimulus sheet.
@@ -104,6 +103,6 @@ class getStimulusSheet:
                     "textid" : [currentTrial[currentID]],
                     "text": currentTrial[[textDict[currentID]]],
                 })
-                alltrials = pd.concat([alltrials,currentFrame],ignore_index=True)
+                alltrials = pd.concat([alltrials, currentFrame],ignore_index=True)
             
         return alltrials
