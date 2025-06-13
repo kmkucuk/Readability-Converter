@@ -177,6 +177,7 @@ class getTextProperties():
             glyfTableTag = 'CFF2'
         else:            
             raise KeyError('Font file does not have a glyf table!')
+        
         # Get the units per em
         units_per_em = font['head'].unitsPerEm
 

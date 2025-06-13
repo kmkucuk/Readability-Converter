@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw, ImageFont
 from getFilesInDir import getFilesInDir
 
 import getImageDimensions
+
 from os import chdir, makedirs, path, getcwd
 from getTextProperties import getTextProperties
 from getStimulusSheet import getStimulusSheet
@@ -17,6 +18,10 @@ import math
 import time
 
 def create_text_image(text, text_color, font_path, initial_font_size, line_spacing, kerning, size_adjustment, imageDimensions, backupFontProperties):
+    
+    kerning_pix = kerning * initial_font_size * size_adjustment
+    print('original kerning: ', kerning)
+    print('pix type kerning: ', kerning_pix)
     # Function to wrap text
     def wrap_text(text, font, imageDimensions):
         lines               = []
@@ -155,8 +160,12 @@ def DoAllThings(progressBarUpdate = None, interface=None, finishCallback=None):
         backupFontProperties = None
     print(interface.fontSize)
     print(type(interface.fontSize))
-
-    reference_font_path = fontPath + "\\Times.woff"
+    
+    reference_font_path = fontPath + "\\Arial.ttf"
+    if path.isfile(reference_font_path):
+        reference_font_path = fontPath + "\\Arial.ttf"
+    else:
+        raise FileExistsError("Reference font does not exists, check path: ", reference_font_path)
     # get font files
     allfonts = getFilesInDir(fontPath)
 
