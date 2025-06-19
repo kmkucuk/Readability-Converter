@@ -15,7 +15,7 @@ from getFilesInDir import getFilesInDir
 
 
 # Function to wrap text
-def wrap_text(text, font, kerning, imageDimensions, referenceFont):
+def wrap_text(text, font, kerning, imageDimensions):
     lines               = []
     words               = text.split()
     current_line        = []
@@ -23,13 +23,10 @@ def wrap_text(text, font, kerning, imageDimensions, referenceFont):
     max_width           = imageDimensions["wrap_width"]
     current_width       = imageDimensions["page_borders"]
     word_width          = []
+
     for word in words:            
-        if applyKerningWithReference:
-            word_width = sum(referenceFont.getlength(char) + kerning for char in word) - kerning
-            space_width = referenceFont.getlength(' ') + kerning
-        else:
-            word_width = sum(font.getlength(char) + kerning for char in word) - kerning
-            space_width = font.getlength(' ') + kerning
+        word_width = sum(font.getlength(char) + kerning for char in word) - kerning
+        space_width = font.getlength(' ') + kerning
 
         if current_width + word_width + space_width <= max_width:
             current_line.append(word)
@@ -63,7 +60,13 @@ def create_text_image(text, text_color, trialProperties, sizeAdjustment, imageDi
     font = ImageFont.truetype(fontPath, round(fontSize * sizeAdjustment))      
     referenceFont =  ImageFont.truetype(referenceFontPath, round(fontSize * sizeAdjustment))
     
-    wrappedLines, lineOffset = wrap_text(text, font, kerning, imageDimensions, referenceFont)
+    if applyKerningWithReference:
+        letterSpacingFont = referenceFont
+    else:
+        letterSpacingFont = font
+
+
+    wrappedLines, lineOffset = wrap_text(text, letterSpacingFont, kerning, imageDimensions)
 
     # TODO: Loop through all font conditions, and load in backup fonts for each one 
     if renderLanguage == "arabic":
@@ -86,7 +89,7 @@ def create_text_image(text, text_color, trialProperties, sizeAdjustment, imageDi
     currentLineSpacing = fontSize * 1.2 * lineSpacing 
 
     # Calculate text height getbbox(line)[3] gets the height of that line
-    total_height = int(round(sum(font.getbbox(line)[3] + currentLineSpacing for line in wrappedLines) - lineSpacing))
+    total_height = int(round(sum(referenceFont.getbbox(line)[3] + currentLineSpacing for line in wrappedLines) - lineSpacing))
 
     # find the vertical position (y axis) for the start of paragraph 
     centered_y = imageDimensions["center_y"] - (total_height/4)
@@ -116,10 +119,7 @@ def create_text_image(text, text_color, trialProperties, sizeAdjustment, imageDi
                 renderFont = font
                 offset_y = 0
             draw.text((x, y + offset_y), char, font = renderFont, fill=text_color)
-            if applyKerningWithReference:
-                x += referenceFont.getlength(char) + kerning
-            else:
-                x += renderFont.getlength(char) + kerning
+            x += letterSpacingFont.getlength(char) + kerning
         # measures each line height for each iteration, decides on Y axis 
         # y += font.getsize(line)[1] * lineSpacing
 
@@ -155,7 +155,7 @@ def DoAllThings(progressBarUpdate = None, interface=None, finishCallback=None):
         currentPath = startingPath
         outputPath = currentPath + "\\"+fastLoadFolder+"\\images"
         fontPath = getFilesInDir(currentPath + "\\"+fastLoadFolder+"\\fonts")
-        referenceFontPath = [currentPath + "\\"+fastLoadFolder+"\\fonts\\Arial.ttf"]
+        referenceFontPath = currentPath + "\\"+fastLoadFolder+"\\fonts\\OpenDyslexic.ttf"
         sheetPath = currentPath + "\\"+fastLoadFolder+"\\stimulus_set.xlsx"
         
     else:
@@ -166,12 +166,12 @@ def DoAllThings(progressBarUpdate = None, interface=None, finishCallback=None):
 
     if renderLanguage == "arabic" : 
         backupFontPath = startingPath + "\\"+fastLoadFolder+"\\backupFonts"        
-        backupProperties = getTextProperties(font_files = backupFontPath, font_sizes=interface.fontSize, letter_spacings=interface.spacings, lineSpacings="1")
+        backupProperties = getTextProperties(font_files = backupFontPath, font_sizes = interface.fontSize, letter_spacings = interface.spacings, line_spacings = "1")
 
     else:
         backupProperties = None
 
-    fontProperties = getTextProperties(font_files = fontPath, font_sizes=interface.fontSize, letter_spacings=interface.spacings, lineSpacings="1")   
+    fontProperties = getTextProperties(font_files = fontPath, font_sizes = interface.fontSize, letter_spacings = interface.spacings, line_spacings = "1")   
 
     stimProperties = getStimulusSheet(sheetPath)
 

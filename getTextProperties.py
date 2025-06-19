@@ -1,13 +1,6 @@
 
 from fontTools.ttLib import TTFont
 
-arial_font = TTFont('Arial.ttf')
-opendys_font = TTFont('OpenDyslexic.ttf')
-
-a = 0 
-
-
-
 class getTextProperties():
 
     def __init__(self,font_files,font_sizes,letter_spacings,line_spacings):
