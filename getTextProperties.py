@@ -1,6 +1,12 @@
 
 from fontTools.ttLib import TTFont
 
+arial_font = TTFont('Arial.ttf')
+opendys_font = TTFont('OpenDyslexic.ttf')
+
+a = 0 
+
+
 
 class getTextProperties():
 
@@ -235,7 +241,7 @@ class getTextProperties():
 
         try:
             # check if there is a file extension
-            font_path = font_path[font_path.rindex('/')+1:font_path.rindex('.')]
+            font_path = font_path[font_path.rindex('\\')+1:font_path.rindex('.')]
             return font_path
         except (IndexError, ValueError) as err:
             print(err)
