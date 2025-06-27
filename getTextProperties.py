@@ -1,7 +1,6 @@
 
 from fontTools.ttLib import TTFont
 
-
 class getTextProperties():
 
     def __init__(self,font_files,font_sizes,letter_spacings,line_spacings):
@@ -175,8 +174,11 @@ class getTextProperties():
             glyfTableTag = 'CFF'
         elif 'CFF2' in font:
             glyfTableTag = 'CFF2'
+        elif 'CFF' in font:
+            glyfTableTag = 'CFF'
         else:            
-            raise KeyError('Font file does not have a glyf table!')
+            pass
+            # raise KeyError('Font file does not have a glyf table!')
         
         # Get the units per em
         units_per_em = font['head'].unitsPerEm
@@ -235,7 +237,7 @@ class getTextProperties():
 
         try:
             # check if there is a file extension
-            font_path = font_path[font_path.rindex('/')+1:font_path.rindex('.')]
+            font_path = font_path[font_path.rindex('\\')+1:font_path.rindex('.')]
             return font_path
         except (IndexError, ValueError) as err:
             print(err)
