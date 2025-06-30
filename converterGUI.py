@@ -31,11 +31,15 @@ class MyGUI:
         start_x         = 50 # position where entry/buttons start (x axis)
         start_y         = 10 # position where entry/buttons start (y axis)
         barhop_y        = 20 # pixels to pad after labels of entries 
-        linehop_x       = 60 # pixels to pad after each button/entry component (x axis)
+        linehop_y       = 60 # pixels to pad after each button/entry component (x axis)
+        
+
 
         # pathing sizes
         pathrect_x      = 300 # width of path entry 
         buttonrect_x    = 100 # width of path buttons 
+
+        columnhop_x      = pathrect_x + buttonrect_x + 50
 
         # font size for GUI
         fontsize        = 8
@@ -43,6 +47,7 @@ class MyGUI:
         file_path       = tk.StringVar(self.root) # initialize file path
         folder_path     = tk.StringVar(self.root) # initialize folder path 
         font_folder_path  = tk.StringVar(self.root) # initialize font scaling file path 
+        reference_font_path = tk.StringVar(self.root) # initialize reference font path
         pixels_x_text   = tk.StringVar(self.root,value="1024") # initialize image file size in pix (x axis)
         pixels_y_text   = tk.StringVar(self.root,value="768") # initialize image file size in pix (y axis)
         font_extension  = tk.StringVar(self.root,value=".woff") # initialize font file extension
@@ -55,7 +60,7 @@ class MyGUI:
         # SELECT FILE #
         ###############
         # path label
-        self.fontFileLabel      = tk.Label(self.root, text = "Select Stimulus Set", font = ('Arial',fontsize))
+        self.fontFileLabel      = tk.Label(self.root, text = "Select Stimulus Set", font = ('Arial', fontsize))
         # position label
         self.fontFileLabel.place(x = start_x, y=start_y)
         # path entry bar
@@ -69,14 +74,33 @@ class MyGUI:
 
         self.fileButton.place(x = int(round(pathrect_x*1.05))+start_x, y=start_y+barhop_y , width = buttonrect_x)
 
+        ##########################
+        # SELECT REFERENCE FONT  #
+        ##########################
+        # path label
+        self.referenceFontLabel      = tk.Label(self.root, text = "Select Reference Font", font = ('Arial', fontsize))
+        # position label
+        self.referenceFontLabel.place(x = start_x + columnhop_x, y=start_y)
+        # path entry bar
+        self.selectReferenceFont         = tk.Entry(self.root, textvariable=reference_font_path)
+        #position the bar
+        self.selectReferenceFont.place(x = start_x + columnhop_x, y=start_y + barhop_y, width = pathrect_x)
+
+        # SELECT FILE BUTTON
+        # specifies what is and where the select stim set file button will be
+        self.fileButton         = tk.Button(self.root,text = "Select File", font = ('Arial',fontsize),command = self.browse_reference_font)      
+
+        self.fileButton.place(x = int(round(pathrect_x*1.05))+start_x + columnhop_x, y= start_y + barhop_y , width = buttonrect_x)
+
+
         #################
         # SELECT FOLDER #
         #################
-        secondLineY = start_y+linehop_x
+        secondLineY = start_y+linehop_y
         # path label
         self.folderLabel        = tk.Label(self.root, text = "Select Image Output Folder", font = ('Arial',fontsize))
         # position label
-        self.folderLabel.place(x = start_x, y=start_y+linehop_x)
+        self.folderLabel.place(x = start_x, y = start_y + linehop_y)
         # path entry bar         
         self.selectFolder       = tk.Entry(self.root,textvariable=folder_path)
         # position the bar 
@@ -85,17 +109,17 @@ class MyGUI:
         # SELECT FOLDER BUTTON 
         # specifies what is and where the select image output folder button will be
         self.folderButton       = tk.Button(self.root,text = "Select Folder", font = ('Arial',fontsize),command = self.browse_folder_button)
-        self.folderButton.place(x = int(round(pathrect_x*1.05))+start_x, y=start_y+linehop_x+barhop_y , width = buttonrect_x)
+        self.folderButton.place(x = int(round(pathrect_x*1.05))+start_x, y=start_y+linehop_y+barhop_y , width = buttonrect_x)
 
         ##############
         # FONT FILES #
         ##############```   `
         
-        thirdLineY              = start_y+(linehop_x*2)
+        thirdLineY              = start_y+(linehop_y*2)
         # path label
         self.fontFileLabel      = tk.Label(self.root, text = "Select Font Files", font = ('Arial',fontsize))
         # position label
-        self.fontFileLabel.place(x = start_x, y=thirdLineY)
+        self.fontFileLabel.place(x = start_x, y = thirdLineY)
         # path entry bar
         self.selectFontFile     = tk.Entry(self.root,textvariable=font_folder_path)
         #position the bar
@@ -111,7 +135,7 @@ class MyGUI:
         # IMAGE SIZE PIXELS BAR #
         #########################
         # X AXIS 
-        fourthLineY = start_y+(linehop_x*3)
+        fourthLineY = start_y+(linehop_y*3)
         # x axis label
         self.pixelsXlabel       = tk.Label(self.root, text = "Pixels X axis (horizontal)", font = ('Arial',fontsize))
         # position label
@@ -158,18 +182,18 @@ class MyGUI:
         ###############
         # SPACING BAR #
         ###############
-        fifthLineY = start_y+(linehop_x*4)
+        fifthLineY = start_y+(linehop_y*4)
         # spacing label
-        self.spacingLabel       = tk.Label(self.root, text = "Enter letter spacing in em units (e.g. 0.05,0,0.05), leave empty for 0 spacing", font = ('Arial',fontsize))
+        self.spacingLabel       = tk.Label(self.root, text = "Enter letter spacing in em units (e.g. 0.05,0,0.05), leave empty for 0 spacing", font = ('Arial', fontsize))
         # position label
-        self.spacingLabel.place(x = start_x, y=fifthLineY)
+        self.spacingLabel.place(x = start_x, y = fifthLineY)
         # spacing entry bar
-        self.spacingEntry       = tk.Entry(self.root,textvariable="")
+        self.spacingEntry       = tk.Entry(self.root, textvariable="")
         # position the bar
-        self.spacingEntry.place(x = start_x, y=fifthLineY+barhop_y, width = pathrect_x/2)
+        self.spacingEntry.place(x = start_x, y=fifthLineY + barhop_y, width = pathrect_x/2)
 
         # START CONVERT BUTTON
-        sixthLineY              = start_y+(linehop_x*5)
+        sixthLineY              = start_y+(linehop_y*5)
         # specifies what is and where the CONVERT button will be
         self.convertButton      = tk.Button(self.root,text = "Convert", font = ('Arial',fontsize*2),command = self.return_values, state=convState)
         self.convertButton.place(x = start_x, y=sixthLineY, width = buttonrect_x*1.5)
@@ -179,10 +203,10 @@ class MyGUI:
         #############################################
         self.progress = tk.IntVar()
         self.progressBar= Progressbar(orient=tk.HORIZONTAL, variable=self.progress, length=int(dbox_x * 0.7))
-        self.progressBar.place (x=start_x, y=start_y + linehop_x*6)
+        self.progressBar.place (x=start_x, y=start_y + linehop_y*6)
 
         def conv_button_update(*args):
-            if (len(file_path.get())>5) and (len(folder_path.get())>5) and (len(font_folder_path.get())>5):
+            if (len(file_path.get())>5) and (len(folder_path.get())>5) and (len(font_folder_path.get())>5) and (len(reference_font_path.get())>5):
                 self.convertButton.config(state='normal')
                 #print('larger than 5')
             else:
@@ -193,6 +217,7 @@ class MyGUI:
         file_path.trace('w',conv_button_update)
         folder_path.trace('w',conv_button_update)
         font_folder_path.trace('w',conv_button_update)
+        reference_font_path.trace('w', conv_button_update)
 
         # when you press X, on_sclosing is passed 
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -206,6 +231,11 @@ class MyGUI:
         #print('********************')
         self.selectFile.delete(0,tk.END)
         self.selectFile.insert(0,file_path)
+
+    def browse_reference_font(self):
+        reference_font_path = filedialog.askopenfilename(title='Select Reference Font File')
+        self.selectReferenceFont.delete(0,tk.END)
+        self.selectReferenceFont.insert(0,reference_font_path)        
 
     def browse_font_folder(self):
         
@@ -249,6 +279,7 @@ class MyGUI:
             self.filepath       = self.selectFile.get()
             self.folderpath     = self.selectFolder.get()
             self.fontfpath      = self.selectFontFile.get()
+            self.referencefpath = self.selectReferenceFont.get()
             self.val_pixelsx    = self.pixelsX.get()
             self.val_pixelsy    = self.pixelsY.get()
             self.spacings       = self.spacingEntry.get()
