@@ -1,7 +1,7 @@
 
 from fontTools.ttLib import TTFont
 
-class getTextProperties():
+class generate_formats():
 
     def __init__(self,font_files,font_sizes,letter_spacings,line_spacings):
         """
@@ -13,7 +13,7 @@ class getTextProperties():
 
         :param font_sizes: The requested sizes for fonts, in pixels.
         :param letter_spacings: A list of letter spacing values in em units, separated by commas
-                            (e.g. -0.05,0,0,05)
+                            (e.g. -0.05, 0, 0,05)
         :param line_spacings: A list of line spacing values in ratio units, separated by commas
                             (e.g. 1, 1.2, 1.5)
         """
@@ -234,6 +234,8 @@ class getTextProperties():
 
         :param font_path: A string of font file path.
         """        
+        if "/" in font_path:
+            font_path = font_path.replace("/", "\\")
 
         try:
             # check if there is a file extension

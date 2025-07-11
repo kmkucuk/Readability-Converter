@@ -7,7 +7,7 @@ from tkinter import filedialog
 from tkinter.ttk import *
 
 
-class MyGUI:    
+class MainWindow:    
 
     def __init__(self, fastLoadTest = False, conversion_callback = None):
         self.conversionCallback = conversion_callback
@@ -19,7 +19,7 @@ class MyGUI:
 
         
         # make the dialog box 700 x 400 pixels 
-        dbox_x          = 700
+        dbox_x          = 1000
         dbox_y          = 425
 
         # convert dialog box size into string for geometry function below

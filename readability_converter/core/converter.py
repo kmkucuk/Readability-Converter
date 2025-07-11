@@ -3,15 +3,18 @@ import arabic_reshaper
 import string
 import math
 import time
-import getImageDimensions
+
 from PIL import Image, ImageDraw, ImageFont
 from os import chdir, makedirs, path, getcwd
-from getTextProperties import getTextProperties
-from getStimulusSheet import getStimulusSheet
-from converterGUI import MyGUI
+from readability_converter.utils.text_format_manager import generate_formats
+from readability_converter.utils.file_loader import getFiles
+from readability_converter.utils.image_properties import get_dimensions
+
+from readability_converter.core.text_loader import load
+from gui import MainWindow
 # get from: https://pypi.org/project/python-bidi/
 from bidi.algorithm import get_display
-from getFilesInDir import getFilesInDir
+
 
 
 # Function to wrap text
@@ -60,13 +63,13 @@ def create_text_image(text, text_color, trialProperties, sizeAdjustment, imageDi
     font = ImageFont.truetype(fontPath, round(fontSize * sizeAdjustment))      
     referenceFont =  ImageFont.truetype(referenceFontPath, round(fontSize * sizeAdjustment))
     
-    if applyKerningWithReference:
+    if "Times" in fontPath or (not applyKerningWithReference):
+        letterSpacingFont = font
+    elif applyKerningWithReference:
         letterSpacingFont = referenceFont
         charactersWithOriginalSpacingThirtyPercent = "VAIt\'\""
         charactersWithOriginalSpacingSixtyPercent = "$"
-        charactersWithOriginalSpacingTenPercent = "WHmMODr"
-    else:
-        letterSpacingFont = font
+        charactersWithOriginalSpacingTenPercent = "WHmMODr"    
 
 
     wrappedLines, lineOffset = wrap_text(text, letterSpacingFont, kerning, imageDimensions)
@@ -104,9 +107,7 @@ def create_text_image(text, text_color, trialProperties, sizeAdjustment, imageDi
         # shift baseline towards lower line for latin characters 
         shift_baseline = (abs(backupProperties.get_font_baseline(fontPath) - backupProperties.get_font_baseline(backupFontPath)) * fontSize * sizeAdjustment) / 2
     
-        backupFontChars = ''.join([string.ascii_letters, '%()[]\"'])
-
-    
+        backupFontChars = ''.join([string.ascii_letters, '%()[]\"'])    
 
     for line, offset in zip(wrappedLines, lineOffset):
         if renderLanguage == "arabic":
@@ -124,7 +125,8 @@ def create_text_image(text, text_color, trialProperties, sizeAdjustment, imageDi
                 renderFont = font
                 offset_y = 0
             draw.text((x, y + offset_y), char, font = renderFont, fill=text_color)
-            if fontPath != referenceFontPath:
+            # for letter spacing referencing: letter overlaps are handled for specific cases below
+            if ("OpenDys" in fontPath) and ("Arial" in referenceFontPath):
                 if (char in charactersWithOriginalSpacingThirtyPercent):
                     x += letterSpacingFont.getlength(char) * 1.35 + kerning
                 elif (char in charactersWithOriginalSpacingTenPercent):
@@ -134,7 +136,7 @@ def create_text_image(text, text_color, trialProperties, sizeAdjustment, imageDi
                 else:
                     x += letterSpacingFont.getlength(char) + kerning
             else:
-                x += font.getlength(char) + kerning
+                x += letterSpacingFont.getlength(char) + kerning
         # measures each line height for each iteration, decides on Y axis 
         # y += font.getsize(line)[1] * lineSpacing
 
@@ -144,19 +146,23 @@ def create_text_image(text, text_color, trialProperties, sizeAdjustment, imageDi
 
     return image
 
-# initialize the Readability Tool converter GUI 
-renderLanguage = "english" # TODO (mert): add a feature where you can select Latin or Arabic alphabet.
 
-applyKerningWithReference = True
-fastLoadTestData = True
-fastLoadFolder = "dyslexia"
-backupFontPath  = ""
-startingPath = ""
-startingPath = getcwd() + "\\projects"
 
 def DoAllThings(progressBarUpdate = None, interface=None, finishCallback=None):
     global fastLoadTestData
     global startingPath
+    global applyKerningWithReference
+    # initialize the Readability Tool converter GUI 
+    renderLanguage = "english" # TODO (mert): add a feature where you can select Latin or Arabic alphabet.
+
+    applyKerningWithReference = True
+    fastLoadTestData = True
+    fastLoadFolder = "dyslexia"
+    backupFontPath  = ""
+    startingPath = ""
+    startingPath = getcwd() + "\\projects"    
+
+
     sheetPath = ""
     fontPath = ""
     outputPath = ""
@@ -167,32 +173,36 @@ def DoAllThings(progressBarUpdate = None, interface=None, finishCallback=None):
         fastLoadTestData = fastLoadTestData and folderExists     
 
     if fastLoadTestData:
-        currentPath = startingPath
-        outputPath = currentPath + "\\"+fastLoadFolder+"\\images"
-        fontPath = getFilesInDir(currentPath + "\\"+fastLoadFolder+"\\fonts")
-        referenceFontPath = currentPath + "\\"+fastLoadFolder+"\\fonts\\Arial.ttf"
-        sheetPath = currentPath + "\\"+fastLoadFolder+"\\stimulus_set.xlsx"
+        outputPath = startingPath + "\\"+fastLoadFolder+"\\images"
+        fontPath = getFiles(startingPath + "\\"+fastLoadFolder+"\\fonts")
+        referenceFontPath = startingPath + "\\"+fastLoadFolder+"\\fonts\\Arial.ttf"        
+        sheetPath = startingPath + "\\"+fastLoadFolder+"\\stimulus_set.xlsx"
         
     else:
         outputPath = interface.folderpath
         sheetPath = interface.filepath
-        fontPath = getFilesInDir(interface.fontfpath)
+        fontPath = getFiles(interface.fontfpath)
         referenceFontPath = interface.referencefpath
 
     if renderLanguage == "arabic" : 
-        backupFontPath = startingPath + "\\"+fastLoadFolder+"\\backupFonts"        
-        backupProperties = getTextProperties(font_files = backupFontPath, font_sizes = interface.fontSize, letter_spacings = interface.spacings, line_spacings = "1")
+        backupFontPath = startingPath + "\\" + fastLoadFolder + "\\backupFonts"        
+        backupProperties = generate_formats(font_files = backupFontPath, font_sizes = interface.fontSize, letter_spacings = interface.spacings, line_spacings = "1")
 
     else:
         backupProperties = None
 
-    x_height_ref = currentPath + "\\"+ fastLoadFolder + "\\Times.ttf"
+    x_height_ref = startingPath + "\\"+ fastLoadFolder + "\\Times.ttf"
 
-    fontProperties = getTextProperties(font_files = fontPath, font_sizes = interface.fontSize, letter_spacings = interface.spacings, line_spacings = "1")   
+    fontProperties = generate_formats(font_files = fontPath, font_sizes = interface.fontSize, letter_spacings = interface.spacings, line_spacings = "1")   
 
-    stimProperties = getStimulusSheet(sheetPath)
+    if len(referenceFontPath) > 1:
+        refFileTag = ("").join(["ref", fontProperties.get_font_name(referenceFontPath)])
+    else:
+        refFileTag = ""
 
-    imageDimensions = getImageDimensions.get_dimensions(interface.val_pixelsx, interface.val_pixelsy)
+    stimProperties = load(sheetPath)
+
+    imageDimensions = get_dimensions(interface.val_pixelsx, interface.val_pixelsy)
 
     rowCount = stimProperties.all_trials.shape[0]
     for index, currentTrial in stimProperties.all_trials.iterrows():
@@ -217,10 +227,12 @@ def DoAllThings(progressBarUpdate = None, interface=None, finishCallback=None):
                                     imageDimensions,
                                     backupProperties,
                                     referenceFontPath)
-            
-            pathName =  "/".join([outputPath,"_".join([currentTrial["textid"],fontName])]) + ".PNG"
+            if "Times" in fontName:
+                pathName =  "/".join([outputPath,"_".join([currentTrial["textid"], fontName])]) + ".PNG"    
+            else:
+                pathName =  "/".join([outputPath,"_".join([currentTrial["textid"], fontName, refFileTag])]) + ".PNG"
 
-            print ("it took : " + str(time.time()- startTime))
+            print ("it took : " + str(time.time() - startTime))
 
             if not path.isdir(outputPath):
                 makedirs(outputPath)
@@ -233,4 +245,4 @@ def DoAllThings(progressBarUpdate = None, interface=None, finishCallback=None):
     finishCallback()
 
 
-_interface = MyGUI(conversion_callback=DoAllThings, fastLoadTest=fastLoadTestData)
+_interface = MainWindow(conversion_callback=DoAllThings, fastLoadTest=fastLoadTestData)

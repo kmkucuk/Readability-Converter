@@ -3,9 +3,9 @@
 
 import pandas as pd
 
-class getStimulusSheet:
+class load():
 
-    def __init__(self,sheet_path):
+    def __init__(self, sheet_path):
         """
         Creates a class for handling stimulus sheet
 

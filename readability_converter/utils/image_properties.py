@@ -1,5 +1,4 @@
 # get image dimensions
-
 def round_for_image(value):
     return int(round(float(value)))
 
